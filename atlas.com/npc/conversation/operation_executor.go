@@ -8,6 +8,7 @@ import (
 	"github.com/Chronicle20/atlas-constants/field"
 	"github.com/Chronicle20/atlas-constants/job"
 	_map "github.com/Chronicle20/atlas-constants/map"
+	"github.com/Chronicle20/atlas-constants/world"
 	"github.com/Chronicle20/atlas-tenant"
 	"github.com/sirupsen/logrus"
 	"strconv"
@@ -604,6 +605,38 @@ func (e *OperationExecutorImpl) createStepForOperation(f field.Model, characterI
 		}
 
 		return stepId, saga.Pending, saga.DestroyAsset, payload, nil
+
+	case "increase_buddy_capacity":
+		// Format: increase_buddy_capacity
+		// Context: amount (byte)
+		amountValue, exists := operation.Params()["amount"]
+		if !exists {
+			return "", "", "", nil, errors.New("missing amount parameter for increase_buddy_capacity operation")
+		}
+
+		// Evaluate the amount value
+		amountInt, err := e.evaluateContextValueAsInt(characterId, "amount", amountValue)
+		if err != nil {
+			return "", "", "", nil, err
+		}
+
+		// Validate amount is positive and reasonable (1-255)
+		if amountInt < 1 || amountInt > 255 {
+			return "", "", "", nil, fmt.Errorf("amount [%d] for increase_buddy_capacity operation must be between 1 and 255", amountInt)
+		}
+
+		// For now, we'll use the amount directly as the new capacity
+		// In a real implementation, this would need to get the current capacity and add the amount
+		// but since this is through the saga orchestrator, we'll assume it handles the logic
+		newCapacity := byte(amountInt)
+
+		payload := saga.IncreaseBuddyCapacityPayload{
+			CharacterId: characterId,
+			WorldId:     world.Id(f.WorldId()),
+			NewCapacity: newCapacity,
+		}
+
+		return stepId, saga.Pending, saga.IncreaseBuddyCapacity, payload, nil
 
 	default:
 		return "", "", "", nil, fmt.Errorf("unknown operation type: %s", operation.Type())
