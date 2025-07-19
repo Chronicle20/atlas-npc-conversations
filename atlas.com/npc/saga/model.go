@@ -105,6 +105,7 @@ const (
 	CreateSkill            Action = "create_skill"
 	UpdateSkill            Action = "update_skill"
 	ValidateCharacterState Action = "validate_character_state"
+	IncreaseBuddyCapacity  Action = "increase_buddy_capacity"
 )
 
 // Step represents a single step within a saga.
@@ -207,6 +208,13 @@ type ValidateCharacterStatePayload struct {
 	Conditions  []validation.ConditionInput `json:"conditions"`  // Conditions to validate
 }
 
+// IncreaseBuddyCapacityPayload represents the payload required to increase a character's buddy list capacity.
+type IncreaseBuddyCapacityPayload struct {
+	CharacterId uint32   `json:"characterId"` // CharacterId associated with the action
+	WorldId     world.Id `json:"worldId"`     // WorldId associated with the action
+	NewCapacity byte     `json:"newCapacity"` // New buddy list capacity value
+}
+
 type ExperienceDistributions struct {
 	ExperienceType string `json:"experienceType"`
 	Amount         uint32 `json:"amount"`
@@ -286,6 +294,12 @@ func (s *Step[T]) UnmarshalJSON(data []byte) error {
 		s.Payload = any(payload).(T)
 	case UpdateSkill:
 		var payload UpdateSkillPayload
+		if err := json.Unmarshal(aux.Payload, &payload); err != nil {
+			return fmt.Errorf("failed to unmarshal payload for action %s: %w", s.Action, err)
+		}
+		s.Payload = any(payload).(T)
+	case IncreaseBuddyCapacity:
+		var payload IncreaseBuddyCapacityPayload
 		if err := json.Unmarshal(aux.Payload, &payload); err != nil {
 			return fmt.Errorf("failed to unmarshal payload for action %s: %w", s.Action, err)
 		}
