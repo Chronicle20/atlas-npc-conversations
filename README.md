@@ -193,6 +193,8 @@ Operations are actions executed during a `genericAction` state:
   - Params: `skillId`, `level` (optional, default 1), `masterLevel` (optional, default 1)
 - `destroy_item` - Remove items from inventory
   - Params: `itemId`, `quantity`
+- `increase_buddy_capacity` - Increase character's buddy list capacity
+  - Params: `amount` (1-255)
 
 ### Conditions
 
